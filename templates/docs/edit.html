@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}{{ page.title }} bearbeiten{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_list') }}">Wiki</a></li>
+    {% if page.namespace %}
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_list', ns=page.namespace) }}">{{ page.namespace }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_view', path=page.full_path) }}">{{ page.title }}</a></li>
+    <li class="breadcrumb-item active">Bearbeiten</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-pencil me-2 text-warning"></i>{{ page.title }} bearbeiten</h5>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('doc_view', path=page.full_path) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-eye me-1"></i>Ansicht
+          </a>
+          <a href="{{ url_for('doc_history', path=page.full_path) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i>Verlauf
+          </a>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          <div class="row g-3 mb-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Titel <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control form-control-lg" required
+                     value="{{ page.title }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Sichtbarkeit</label>
+              <div class="mt-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="is_public" id="is_public"
+                         {% if page.is_public %}checked{% endif %}>
+                  <label class="form-check-label" for="is_public">Öffentlich</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Inhalt (Markdown)</label>
+            <textarea name="content" class="form-control" rows="20" data-markdown>{{ page.content or '' }}</textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Änderungskommentar</label>
+            <input type="text" name="comment" class="form-control"
+                   placeholder="Was wurde geändert? (optional)">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i>Speichern
+            </button>
+            <a href="{{ url_for('doc_view', path=page.full_path) }}" class="btn btn-outline-secondary">Abbrechen</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

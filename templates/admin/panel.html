@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+{% block content %}
+
+<h1 class="h3 fw-bold mb-4"><i class="bi bi-gear me-2"></i>Administration</h1>
+
+<div class="row g-4">
+  <!-- Users -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Benutzerverwaltung</h5>
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+          <i class="bi bi-person-plus me-1"></i>Neuer Benutzer
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Benutzer</th><th>E-Mail</th><th>Rolle</th><th>Abteilung</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="user-avatar">{{ user.initials }}</div>
+                  <div>
+                    <div class="fw-semibold small">{{ user.display_name }}</div>
+                    <div class="text-muted" style="font-size:.7rem">@{{ user.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="small text-muted">{{ user.email }}</td>
+              <td>
+                <span class="badge bg-{{ 'danger' if user.role=='admin' else 'primary' if user.role=='agent' else 'secondary' }}">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="small text-muted">{{ user.department or '—' }}</td>
+              <td>
+                {% if user.is_active %}
+                <span class="badge bg-success">Aktiv</span>
+                {% else %}
+                <span class="badge bg-danger">Gesperrt</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.id != current_user.id %}
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal" data-bs-target="#editUser{{ user.id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Teams -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-success"></i>Teams</h5>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+          <i class="bi bi-plus me-1"></i>Neues Team
+        </button>
+      </div>
+      {% if teams %}
+      <div class="accordion accordion-flush" id="teamsAccordion">
+        {% for team in teams %}
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed py-3" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#team{{ team.id }}">
+              <i class="bi bi-people me-2 text-success"></i>
+              <strong>{{ team.name }}</strong>
+              <span class="badge bg-secondary ms-2">{{ team.members|length }} Mitglieder</span>
+            </button>
+          </h2>
+          <div id="team{{ team.id }}" class="accordion-collapse collapse">
+            <div class="accordion-body">
+              {% if team.description %}
+              <p class="text-muted small mb-3">{{ team.description }}</p>
+              {% endif %}
+              <form method="post" action="{{ url_for('admin_team_members', team_id=team.id) }}">
+                <div class="row g-2 mb-3">
+                  {% for user in users %}
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="user_ids"
+                             value="{{ user.id }}" id="t{{ team.id }}u{{ user.id }}"
+                             {% if user in team.members %}checked{% endif %}>
+                      <label class="form-check-label small" for="t{{ team.id }}u{{ user.id }}">
+                        {{ user.display_name }}
+                        <span class="text-muted">({{ user.username }})</span>
+                      </label>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-sm btn-success">Mitglieder speichern</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card-body text-center text-muted py-4">Noch keine Teams</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- System info -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-bar-chart me-2"></i>System-Übersicht</h6>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item d-flex justify-content-between">
+            Benutzer gesamt <strong>{{ users|length }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            Aktive Benutzer <strong>{{ users|selectattr('is_active')|list|length }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            Teams <strong>{{ teams|length }}</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm bg-dark text-white">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Rollenübersicht</h6>
+        <dl class="small mb-0">
+          <dt class="text-warning">Admin</dt>
+          <dd class="text-secondary">Vollzugriff auf alle Funktionen, Benutzerverwaltung</dd>
+          <dt class="text-primary">Agent</dt>
+          <dd class="text-secondary">Tickets bearbeiten, Assets verwalten, Kommentare</dd>
+          <dt>User</dt>
+          <dd class="text-secondary mb-0">Eigene Tickets erstellen und einsehen</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modals -->
+{% for user in users %}
+{% if user.id != current_user.id %}
+<div class="modal fade" id="editUser{{ user.id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin_user_edit', user_id=user.id) }}">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ user.display_name }} bearbeiten</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" name="full_name" class="form-control" value="{{ user.full_name or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Abteilung</label>
+            <input type="text" name="department" class="form-control" value="{{ user.department or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rolle</label>
+            <select name="role" class="form-select">
+              {% for r in ['user','agent','admin'] %}
+              <option value="{{ r }}" {% if user.role==r %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="is_active" id="active{{ user.id }}"
+                     {% if user.is_active %}checked{% endif %}>
+              <label class="form-check-label" for="active{{ user.id }}">Konto aktiv</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Neues Passwort (leer lassen = unverändert)</label>
+            <input type="password" name="new_password" class="form-control" minlength="6">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin_user_create') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Neuen Benutzer erstellen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" name="full_name" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Benutzername <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">E-Mail <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Abteilung</label>
+            <input type="text" name="department" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rolle</label>
+            <select name="role" class="form-select">
+              <option value="user">user</option>
+              <option value="agent">agent</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Passwort <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" required minlength="6">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Erstellen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create Team Modal -->
+<div class="modal fade" id="createTeamModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin_team_create') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Neues Team erstellen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Team-Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required placeholder="z.B. IT-Support">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Beschreibung</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="submit" class="btn btn-success">Team erstellen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

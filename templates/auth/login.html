@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Anmelden{% endblock %}
+{% block auth_content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <i class="bi bi-headset text-primary" style="font-size:3rem"></i>
+      <h1 class="h3 mt-2 fw-bold">HelpDesk Pro</h1>
+      <p class="text-muted small">Melde dich mit deinem Konto an</p>
+    </div>
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Benutzername oder E-Mail</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="username" class="form-control" required autofocus
+                 placeholder="admin">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Passwort</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" class="form-control" required placeholder="••••••••">
+        </div>
+      </div>
+      <div class="mb-3 d-flex align-items-center justify-content-between">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="remember" id="remember">
+          <label class="form-check-label small" for="remember">Angemeldet bleiben</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Anmelden
+      </button>
+    </form>
+    <div class="mt-4 p-3 bg-light rounded small">
+      <strong>Demo-Zugänge:</strong><br>
+      <code>admin / admin123</code> &nbsp;·&nbsp;
+      <code>agent1 / agent123</code> &nbsp;·&nbsp;
+      <code>user1 / user123</code>
+    </div>
+  </div>
+</div>
+{% endblock %} {# auth_content #}

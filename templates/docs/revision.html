@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Revision: {{ page.title }}{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_list') }}">Wiki</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_view', path=page.full_path) }}">{{ page.title }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_history', path=page.full_path) }}">Versionshistorie</a></li>
+    <li class="breadcrumb-item active">Revision</li>
+  </ol>
+</nav>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0 fw-bold">{{ revision.title or page.title }}</h5>
+      <div class="text-muted small mt-1">
+        <i class="bi bi-clock me-1"></i>{{ revision.created_at.strftime('%d.%m.%Y %H:%M') }}
+        {% if revision.author %}
+        &nbsp;·&nbsp;
+        <i class="bi bi-person me-1"></i>{{ revision.author.display_name }}
+        {% endif %}
+        {% if revision.comment %}
+        &nbsp;·&nbsp; <em>{{ revision.comment }}</em>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('doc_view', path=page.full_path) }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-eye me-1"></i>Aktuelle Version
+      </a>
+      <a href="{{ url_for('doc_history', path=page.full_path) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-clock-history me-1"></i>Verlauf
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-4">
+    <div class="alert alert-warning d-flex gap-2 mb-4">
+      <i class="bi bi-exclamation-triangle flex-shrink-0 mt-1"></i>
+      <div>
+        Dies ist eine <strong>ältere Version</strong> der Seite.
+        <a href="{{ url_for('doc_view', path=page.full_path) }}">Zur aktuellen Version →</a>
+      </div>
+    </div>
+    <div class="wiki-content">
+      {{ revision.content|markdown|safe }}
+    </div>
+  </div>
+</div>
+{% endblock %}

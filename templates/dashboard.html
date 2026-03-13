@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="h3 mb-0 fw-bold">Dashboard</h1>
+    <p class="text-muted mb-0">Willkommen zurück, {{ current_user.display_name }}!</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('ticket_create') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i> Neues Ticket
+    </a>
+    <a href="{{ url_for('doc_create') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-file-earmark-plus me-1"></i> Neue Wiki-Seite
+    </a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
+            <i class="bi bi-exclamation-circle"></i>
+          </div>
+          <span class="text-muted small fw-semibold">OFFEN</span>
+        </div>
+        <div class="stat-value text-danger">{{ stats.tickets_open }}</div>
+        <a href="{{ url_for('ticket_list', status='open') }}" class="stretched-link text-muted small">Alle offenen →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+            <i class="bi bi-arrow-repeat"></i>
+          </div>
+          <span class="text-muted small fw-semibold">IN ARBEIT</span>
+        </div>
+        <div class="stat-value text-primary">{{ stats.tickets_in_progress }}</div>
+        <a href="{{ url_for('ticket_list', status='in_progress') }}" class="stretched-link text-muted small">In Bearbeitung →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+            <i class="bi bi-person-check"></i>
+          </div>
+          <span class="text-muted small fw-semibold">MEINE</span>
+        </div>
+        <div class="stat-value text-warning">{{ stats.tickets_my }}</div>
+        <a href="{{ url_for('ticket_list', mine=1) }}" class="stretched-link text-muted small">Meine Tickets →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <span class="text-muted small fw-semibold">GELÖST</span>
+        </div>
+        <div class="stat-value text-success">{{ stats.tickets_resolved }}</div>
+        <a href="{{ url_for('ticket_list', status='resolved') }}" class="stretched-link text-muted small">Gelöste →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Second row: Assets & Docs -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+            <i class="bi bi-pc-display"></i>
+          </div>
+          <span class="text-muted small fw-semibold">ASSETS GESAMT</span>
+        </div>
+        <div class="stat-value text-info">{{ stats.assets_total }}</div>
+        <a href="{{ url_for('asset_list') }}" class="stretched-link text-muted small">Assets anzeigen →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+          <span class="text-muted small fw-semibold">ASSETS AKTIV</span>
+        </div>
+        <div class="stat-value text-success">{{ stats.assets_active }}</div>
+        <a href="{{ url_for('asset_list', status='active') }}" class="stretched-link text-muted small">Aktive Assets →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+            <i class="bi bi-tools"></i>
+          </div>
+          <span class="text-muted small fw-semibold">IN WARTUNG</span>
+        </div>
+        <div class="stat-value text-warning">{{ stats.assets_maintenance }}</div>
+        <a href="{{ url_for('asset_list', status='maintenance') }}" class="stretched-link text-muted small">Wartung →</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3">
+            <i class="bi bi-journal-text"></i>
+          </div>
+          <span class="text-muted small fw-semibold">WIKI-SEITEN</span>
+        </div>
+        <div class="stat-value">{{ stats.docs_total }}</div>
+        <a href="{{ url_for('doc_list') }}" class="stretched-link text-muted small">Wiki öffnen →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tables row -->
+<div class="row g-4">
+  <!-- Recent Tickets -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Neueste Tickets</h6>
+        <a href="{{ url_for('ticket_list') }}" class="btn btn-sm btn-outline-primary">Alle anzeigen</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th><th>Titel</th><th>Status</th><th>Priorität</th><th>Erstellt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent_tickets %}
+            <tr>
+              <td><a href="{{ url_for('ticket_detail', ticket_id=t.id) }}" class="text-muted small">#{{ t.id }}</a></td>
+              <td>
+                <a href="{{ url_for('ticket_detail', ticket_id=t.id) }}" class="text-decoration-none fw-semibold text-dark">
+                  {{ t.title|truncate(50) }}
+                </a>
+                {% if t.category %}<span class="badge bg-light text-dark ms-1 small">{{ t.category }}</span>{% endif %}
+              </td>
+              <td>
+                <span class="badge bg-{{ t.status_label[1] }}">{{ t.status_label[0] }}</span>
+              </td>
+              <td>
+                <span class="badge bg-{{ t.priority_label[1] }}">{{ t.priority_label[0] }}</span>
+              </td>
+              <td class="text-muted small">{{ t.created_at|timeago }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Keine Tickets vorhanden</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side panels -->
+  <div class="col-lg-4">
+    <!-- My Tickets -->
+    {% if assigned_tickets %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-person-check me-2 text-warning"></i>Meine Tickets</h6>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for t in assigned_tickets %}
+        <a href="{{ url_for('ticket_detail', ticket_id=t.id) }}"
+           class="list-group-item list-group-item-action py-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="small fw-semibold text-dark">{{ t.title|truncate(40) }}</span>
+              <div class="text-muted" style="font-size:.75rem">{{ t.created_at|timeago }}</div>
+            </div>
+            <span class="badge bg-{{ t.priority_label[1] }} ms-2">{{ t.priority_label[0] }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Critical Tickets -->
+    {% if critical_tickets %}
+    <div class="card border-0 shadow-sm border-danger border-opacity-25">
+      <div class="card-header bg-danger text-white py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-fire me-2"></i>Kritische Tickets</h6>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for t in critical_tickets %}
+        <a href="{{ url_for('ticket_detail', ticket_id=t.id) }}"
+           class="list-group-item list-group-item-action py-2">
+          <span class="small fw-semibold">{{ t.title|truncate(42) }}</span>
+          <div class="text-muted" style="font-size:.75rem">{{ t.created_at|timeago }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

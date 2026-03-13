@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Neues Ticket{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('ticket_list') }}">Tickets</a></li>
+    <li class="breadcrumb-item active">Neues Ticket</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>Neues Ticket erstellen</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Titel <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control form-control-lg" required
+                     placeholder="Kurze Problembeschreibung…">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Beschreibung</label>
+              <textarea name="description" class="form-control" rows="8" data-markdown
+                        placeholder="Detaillierte Beschreibung des Problems…"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Priorität</label>
+              <select name="priority" class="form-select">
+                <option value="low">Niedrig</option>
+                <option value="medium" selected>Mittel</option>
+                <option value="high">Hoch</option>
+                <option value="critical">Kritisch</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Kategorie</label>
+              <input type="text" name="category" class="form-control" list="categories"
+                     placeholder="z.B. Netzwerk, Hardware…">
+              <datalist id="categories">
+                {% for c in ['Hardware','Software','Netzwerk','E-Mail','Drucker','VPN','Sicherheit','Sonstiges'] %}
+                <option value="{{ c }}">{% endfor %}
+              </datalist>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fälligkeitsdatum</label>
+              <input type="date" name="due_date" class="form-control">
+            </div>
+            {% if current_user.is_agent_or_admin() %}
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Bearbeiter zuweisen</label>
+              <select name="assignee_id" class="form-select">
+                <option value="">— Nicht zugewiesen —</option>
+                {% for agent in agents %}
+                <option value="{{ agent.id }}">{{ agent.display_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Team</label>
+              <select name="team_id" class="form-select">
+                <option value="">— Kein Team —</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Betroffenes Asset</label>
+              <select name="asset_id" class="form-select">
+                <option value="">— Kein Asset —</option>
+                {% for asset in assets %}
+                <option value="{{ asset.id }}">{{ asset.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Tags</label>
+              <input type="text" name="tags" class="form-control"
+                     placeholder="Tags kommagetrennt, z.B. vpn, windows, netzwerk">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Anhänge</label>
+              <input type="file" name="attachments" class="form-control" multiple
+                     accept=".png,.jpg,.jpeg,.gif,.pdf,.txt,.doc,.docx,.xlsx,.zip">
+              <div class="form-text">Erlaubt: PNG, JPG, GIF, PDF, TXT, DOC, DOCX, XLSX, ZIP (max. 16 MB)</div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-send me-1"></i> Ticket erstellen
+            </button>
+            <a href="{{ url_for('ticket_list') }}" class="btn btn-outline-secondary">Abbrechen</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Profil{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+  <div class="user-avatar xl">{{ current_user.initials }}</div>
+  <div>
+    <h1 class="h3 mb-0">{{ current_user.display_name }}</h1>
+    <span class="badge bg-{{ 'danger' if current_user.role=='admin' else 'primary' if current_user.role=='agent' else 'secondary' }}">
+      {{ current_user.role }}
+    </span>
+    <span class="text-muted ms-2 small">{{ current_user.email }}</span>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Profil bearbeiten</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" name="full_name" class="form-control" value="{{ current_user.full_name or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">E-Mail</label>
+            <input type="email" name="email" class="form-control" value="{{ current_user.email }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Abteilung</label>
+            <input type="text" name="department" class="form-control" value="{{ current_user.department or '' }}">
+          </div>
+          <hr>
+          <h6>Passwort ändern</h6>
+          <div class="mb-3">
+            <label class="form-label">Aktuelles Passwort</label>
+            <input type="password" name="old_password" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Neues Passwort</label>
+            <input type="password" name="new_password" class="form-control" minlength="6">
+          </div>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Meine Aktivität</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Gemeldete Tickets</span>
+            <strong>{{ current_user.tickets_reported.count() }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Zugewiesene Tickets</span>
+            <strong>{{ current_user.tickets_assigned.count() }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Kommentare</span>
+            <strong>{{ current_user.comments.count() }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Wiki-Seiten</span>
+            <strong>{{ current_user.doc_pages.count() }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Teams</span>
+            <strong>{{ current_user.teams|length }}</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+    {% if current_user.teams %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Meine Teams</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for team in current_user.teams %}
+          <li class="list-group-item">
+            <i class="bi bi-people me-2 text-primary"></i>{{ team.name }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

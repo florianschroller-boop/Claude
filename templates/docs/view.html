@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('doc_list') }}">Wiki</a></li>
+    {% if page.namespace %}
+    <li class="breadcrumb-item">
+      <a href="{{ url_for('doc_list', ns=page.namespace) }}">{{ page.namespace }}</a>
+    </li>
+    {% endif %}
+    <li class="breadcrumb-item active">{{ page.title }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- Main content -->
+  <div class="col-lg-9">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-file-text text-primary"></i>
+          <h5 class="mb-0 fw-bold">{{ page.title }}</h5>
+          {% if page.namespace %}
+          <span class="badge bg-light text-dark border ns-badge">{{ page.namespace }}</span>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('doc_history', path=page.full_path) }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i>Verlauf
+          </a>
+          <a href="{{ url_for('doc_edit', path=page.full_path) }}"
+             class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>Bearbeiten
+          </a>
+        </div>
+      </div>
+
+      {% if page.toc and '<li>' in page.toc %}
+      <div class="card-body border-bottom py-3">
+        <div class="wiki-toc">
+          <strong class="small text-muted text-uppercase d-block mb-2">Inhaltsverzeichnis</strong>
+          {{ page.toc|safe }}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card-body p-4">
+        <div class="wiki-content">
+          {{ page.rendered_content|safe }}
+        </div>
+      </div>
+
+      <div class="card-footer bg-white py-2 d-flex align-items-center justify-content-between">
+        <div class="text-muted small">
+          {% if page.author %}
+          <i class="bi bi-person me-1"></i>{{ page.author.display_name }}
+          {% endif %}
+          &nbsp;·&nbsp;
+          <i class="bi bi-clock me-1"></i>{{ page.updated_at|timeago }}
+        </div>
+        <div>
+          {% if current_user.is_admin() %}
+          <form method="post" action="{{ url_for('doc_delete', path=page.full_path) }}" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    data-confirm="Seite '{{ page.title }}' wirklich löschen?">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-3">
+    <!-- Related pages in same namespace -->
+    {% set related = [] %}
+    {% if page.namespace %}
+      {% for p in [] %}{% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Seiteninformationen</h6>
+      </div>
+      <div class="card-body p-0">
+        <dl class="row g-0 mb-0 small">
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Namespace</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            {% if page.namespace %}
+            <a href="{{ url_for('doc_list', ns=page.namespace) }}" class="badge bg-light text-dark border text-decoration-none">
+              {{ page.namespace }}
+            </a>
+            {% else %}<span class="text-muted">Haupt</span>{% endif %}
+          </dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Slug</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0 font-monospace">{{ page.slug }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Autor</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ page.author.display_name if page.author else '—' }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Erstellt</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ page.created_at.strftime('%d.%m.%Y') }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted">Geändert</dt>
+          <dd class="col-7 px-3 py-2 mb-0">{{ page.updated_at|timeago }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-lightning me-2"></i>Aktionen</h6>
+      </div>
+      <div class="list-group list-group-flush">
+        <a href="{{ url_for('doc_edit', path=page.full_path) }}"
+           class="list-group-item list-group-item-action small">
+          <i class="bi bi-pencil me-2"></i>Bearbeiten
+        </a>
+        <a href="{{ url_for('doc_history', path=page.full_path) }}"
+           class="list-group-item list-group-item-action small">
+          <i class="bi bi-clock-history me-2"></i>Versionshistorie
+        </a>
+        <a href="{{ url_for('doc_create', ns=page.namespace) }}"
+           class="list-group-item list-group-item-action small">
+          <i class="bi bi-file-earmark-plus me-2"></i>Neue Seite
+        </a>
+        <a href="{{ url_for('doc_list', ns=page.namespace) }}"
+           class="list-group-item list-group-item-action small">
+          <i class="bi bi-folder2 me-2"></i>Namespace anzeigen
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Ticket #{{ ticket.id }} bearbeiten{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('ticket_list') }}">Tickets</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}">#{{ ticket.id }}</a></li>
+    <li class="breadcrumb-item active">Bearbeiten</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-pencil me-2 text-warning"></i>Ticket #{{ ticket.id }} bearbeiten</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Titel <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control form-control-lg" required
+                     value="{{ ticket.title }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Beschreibung</label>
+              <textarea name="description" class="form-control" rows="8" data-markdown>{{ ticket.description or '' }}</textarea>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" class="form-select">
+                {% for val, (label, _) in [('open',('Offen','')),('in_progress',('In Bearbeitung','')),
+                   ('pending',('Wartend','')),('resolved',('Gelöst','')),('closed',('Geschlossen',''))] %}
+                <option value="{{ val }}" {% if ticket.status==val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Priorität</label>
+              <select name="priority" class="form-select">
+                {% for val, label in [('low','Niedrig'),('medium','Mittel'),('high','Hoch'),('critical','Kritisch')] %}
+                <option value="{{ val }}" {% if ticket.priority==val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Kategorie</label>
+              <input type="text" name="category" class="form-control" value="{{ ticket.category or '' }}"
+                     list="categories" placeholder="z.B. Hardware…">
+              <datalist id="categories">
+                {% for c in ['Hardware','Software','Netzwerk','E-Mail','Drucker','VPN','Sicherheit','Sonstiges'] %}
+                <option value="{{ c }}">{% endfor %}
+              </datalist>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Fälligkeitsdatum</label>
+              <input type="date" name="due_date" class="form-control"
+                     value="{{ ticket.due_date.strftime('%Y-%m-%d') if ticket.due_date else '' }}">
+            </div>
+            {% if current_user.is_agent_or_admin() %}
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Bearbeiter</label>
+              <select name="assignee_id" class="form-select">
+                <option value="">— Nicht zugewiesen —</option>
+                {% for agent in agents %}
+                <option value="{{ agent.id }}" {% if ticket.assignee_id==agent.id %}selected{% endif %}>
+                  {{ agent.display_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Team</label>
+              <select name="team_id" class="form-select">
+                <option value="">— Kein Team —</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}" {% if ticket.team_id==team.id %}selected{% endif %}>{{ team.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Asset</label>
+              <select name="asset_id" class="form-select">
+                <option value="">— Kein Asset —</option>
+                {% for asset in assets %}
+                <option value="{{ asset.id }}" {% if ticket.asset_id==asset.id %}selected{% endif %}>{{ asset.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Tags</label>
+              <input type="text" name="tags" class="form-control" value="{{ ticket.tags or '' }}"
+                     placeholder="Tags kommagetrennt">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Weitere Anhänge</label>
+              <input type="file" name="attachments" class="form-control" multiple>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i>Speichern
+            </button>
+            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

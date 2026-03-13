@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Wiki{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 fw-bold"><i class="bi bi-journal-text me-2"></i>Wiki & Dokumentation</h1>
+  <a href="{{ url_for('doc_create') }}" class="btn btn-primary">
+    <i class="bi bi-file-earmark-plus me-1"></i>Neue Seite
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Main content -->
+  <div class="col-lg-9">
+    <!-- Search -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-md-8">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="search" name="search" class="form-control form-control-lg"
+                     placeholder="Wiki durchsuchen…" value="{{ search }}">
+              <button class="btn btn-primary" type="submit">Suchen</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select name="ns" class="form-select form-select-lg" onchange="this.form.submit()">
+              <option value="">Alle Namespaces</option>
+              {% for ns in namespaces %}
+              <option value="{{ ns }}" {% if current_ns==ns %}selected{% endif %}>📁 {{ ns }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pages list -->
+    {% if pages %}
+    {% set ns_grouped = {} %}
+    {% for page in pages %}
+      {% set _ = ns_grouped.update({page.namespace: ns_grouped.get(page.namespace, []) + [page]}) %}
+    {% endfor %}
+
+    {% for ns, ns_pages in ns_grouped.items()|sort %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3 d-flex align-items-center gap-2">
+        {% if ns %}
+        <i class="bi bi-folder2-open text-warning"></i>
+        <h6 class="mb-0 fw-bold">{{ ns }}</h6>
+        <a href="{{ url_for('doc_create', ns=ns) }}" class="btn btn-sm btn-outline-primary ms-auto">
+          <i class="bi bi-plus"></i>
+        </a>
+        {% else %}
+        <i class="bi bi-house text-primary"></i>
+        <h6 class="mb-0 fw-bold">Hauptbereich</h6>
+        {% endif %}
+      </div>
+      <div class="list-group list-group-flush">
+        {% for page in ns_pages %}
+        <a href="{{ url_for('doc_view', path=page.full_path) }}"
+           class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+          <i class="bi bi-file-text text-muted flex-shrink-0"></i>
+          <div class="flex-grow-1 min-w-0">
+            <div class="fw-semibold text-dark">{{ page.title }}</div>
+            <div class="text-muted small text-truncate">
+              {{ page.content|truncate(100)|striptags }}
+            </div>
+          </div>
+          <div class="text-end flex-shrink-0">
+            <div class="text-muted small">{{ page.updated_at|timeago }}</div>
+            {% if page.author %}
+            <div class="text-muted" style="font-size:.7rem">{{ page.author.display_name }}</div>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-journal display-3 d-block mb-3"></i>
+        {% if search %}
+          Keine Seiten für "{{ search }}" gefunden.
+          <br><a href="{{ url_for('doc_list') }}">Suche zurücksetzen</a>
+        {% else %}
+          Noch keine Wiki-Seiten vorhanden.
+          <br><a href="{{ url_for('doc_create') }}">Erste Seite erstellen</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-3">
+    <!-- Namespaces -->
+    {% if namespaces %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-folder2 me-2"></i>Namespaces</h6>
+      </div>
+      <div class="list-group list-group-flush">
+        <a href="{{ url_for('doc_list') }}"
+           class="list-group-item list-group-item-action {% if not current_ns %}active{% endif %} small">
+          <i class="bi bi-house me-2"></i>Alle
+        </a>
+        {% for ns in namespaces %}
+        <a href="{{ url_for('doc_list', ns=ns) }}"
+           class="list-group-item list-group-item-action {% if current_ns==ns %}active{% endif %} small">
+          <i class="bi bi-folder2 me-2"></i>{{ ns }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent changes -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-clock-history me-2"></i>Zuletzt geändert</h6>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for page in recent %}
+        <a href="{{ url_for('doc_view', path=page.full_path) }}"
+           class="list-group-item list-group-item-action py-2">
+          <div class="fw-semibold small text-dark text-truncate">{{ page.title }}</div>
+          <div class="text-muted" style="font-size:.7rem">
+            {% if page.namespace %}<span class="badge bg-light text-dark border me-1">{{ page.namespace }}</span>{% endif %}
+            {{ page.updated_at|timeago }}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

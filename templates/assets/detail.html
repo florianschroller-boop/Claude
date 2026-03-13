@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}{{ asset.name }}{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('asset_list') }}">Assets</a></li>
+    <li class="breadcrumb-item active">{{ asset.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex align-items-start justify-content-between mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="badge bg-{{ asset.type_label[1] }}">{{ asset.type_label[0] }}</span>
+      <span class="badge bg-{{ asset.status_label[1] }}">{{ asset.status_label[0] }}</span>
+      {% if asset.asset_tag %}
+      <code class="small bg-light px-2 py-1 rounded">{{ asset.asset_tag }}</code>
+      {% endif %}
+    </div>
+    <h1 class="h3 fw-bold mb-0">{{ asset.name }}</h1>
+    {% if asset.manufacturer or asset.model %}
+    <p class="text-muted">{{ asset.manufacturer }} {{ asset.model }}</p>
+    {% endif %}
+  </div>
+  {% if current_user.is_agent_or_admin() %}
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('asset_edit', asset_id=asset.id) }}" class="btn btn-outline-primary">
+      <i class="bi bi-pencil me-1"></i>Bearbeiten
+    </a>
+    <a href="{{ url_for('ticket_create') }}?asset_id={{ asset.id }}" class="btn btn-warning">
+      <i class="bi bi-ticket-perforated me-1"></i>Ticket erstellen
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <!-- Details -->
+  <div class="col-lg-8">
+    <div class="row g-3">
+      <!-- Identification -->
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-fingerprint me-2"></i>Identifikation</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="text-muted small">Seriennummer</div>
+                <code>{{ asset.serial_number or '—' }}</code>
+              </div>
+              <div class="col-md-4">
+                <div class="text-muted small">Asset-Tag</div>
+                <code>{{ asset.asset_tag or '—' }}</code>
+              </div>
+              <div class="col-md-4">
+                <div class="text-muted small">Typ</div>
+                <span class="badge bg-{{ asset.type_label[1] }}">{{ asset.type_label[0] }}</span>
+              </div>
+              {% if asset.os_version %}
+              <div class="col-md-4">
+                <div class="text-muted small">Betriebssystem</div>
+                <span>{{ asset.os_version }}</span>
+              </div>
+              {% endif %}
+              {% if asset.ip_address %}
+              <div class="col-md-4">
+                <div class="text-muted small">IP-Adresse</div>
+                <code>{{ asset.ip_address }}</code>
+              </div>
+              {% endif %}
+              {% if asset.mac_address %}
+              <div class="col-md-4">
+                <div class="text-muted small">MAC-Adresse</div>
+                <code>{{ asset.mac_address }}</code>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase info -->
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-receipt me-2"></i>Einkauf & Garantie</h6>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="text-muted small">Kaufdatum</div>
+                <span>{{ asset.purchase_date.strftime('%d.%m.%Y') if asset.purchase_date else '—' }}</span>
+              </div>
+              <div class="col-md-4">
+                <div class="text-muted small">Kaufpreis</div>
+                <span>{{ '%.2f €'|format(asset.purchase_price) if asset.purchase_price else '—' }}</span>
+              </div>
+              <div class="col-md-4">
+                <div class="text-muted small">Garantie bis</div>
+                {% if asset.warranty_until %}
+                  {% if asset.is_warranty_expired %}
+                  <span class="text-danger fw-semibold">
+                    <i class="bi bi-exclamation-triangle me-1"></i>{{ asset.warranty_until.strftime('%d.%m.%Y') }} (abgelaufen)
+                  </span>
+                  {% else %}
+                  <span class="text-success fw-semibold">
+                    <i class="bi bi-shield-check me-1"></i>{{ asset.warranty_until.strftime('%d.%m.%Y') }}
+                  </span>
+                  {% endif %}
+                {% else %}—{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if asset.notes %}
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-sticky me-2"></i>Notizen</h6>
+          </div>
+          <div class="card-body">
+            <p class="mb-0" style="white-space:pre-line">{{ asset.notes }}</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Tickets -->
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-3 d-flex justify-content-between">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-ticket-perforated me-2"></i>Verknüpfte Tickets</h6>
+            <a href="{{ url_for('ticket_create') }}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-plus"></i> Ticket
+            </a>
+          </div>
+          {% if tickets %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 small">
+              <thead class="table-light">
+                <tr><th>#</th><th>Titel</th><th>Status</th><th>Erstellt</th></tr>
+              </thead>
+              <tbody>
+                {% for t in tickets %}
+                <tr>
+                  <td class="text-muted">#{{ t.id }}</td>
+                  <td><a href="{{ url_for('ticket_detail', ticket_id=t.id) }}">{{ t.title|truncate(50) }}</a></td>
+                  <td><span class="badge bg-{{ t.status_label[1] }}">{{ t.status_label[0] }}</span></td>
+                  <td class="text-muted">{{ t.created_at|timeago }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="card-body text-muted text-center py-3">Keine Tickets verknüpft</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold">Zuordnung</h6>
+      </div>
+      <div class="card-body p-0">
+        <dl class="row g-0 mb-0 small">
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Zugewiesen an</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            {% if asset.assigned_to %}
+            <div class="d-flex align-items-center gap-1">
+              <div class="user-avatar" style="width:22px;height:22px;font-size:.55rem">{{ asset.assigned_to.initials }}</div>
+              {{ asset.assigned_to.display_name }}
+            </div>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Abteilung</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ asset.department or '—' }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Standort</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ asset.location or '—' }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Erstellt</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ asset.created_at.strftime('%d.%m.%Y') }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted">Aktualisiert</dt>
+          <dd class="col-7 px-3 py-2 mb-0">{{ asset.updated_at|timeago }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if current_user.is_admin() %}
+    <div class="card border-0 shadow-sm border-danger border-opacity-25">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 fw-semibold text-danger small">Gefahrenzone</h6>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('asset_delete', asset_id=asset.id) }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                  data-confirm="Asset '{{ asset.name }}' wirklich löschen?">
+            <i class="bi bi-trash me-1"></i>Asset löschen
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

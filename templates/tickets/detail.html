@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('ticket_list') }}">Tickets</a></li>
+    <li class="breadcrumb-item active">#{{ ticket.id }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- Main content -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-start">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="text-muted small">#{{ ticket.id }}</span>
+            <span class="badge bg-{{ ticket.status_label[1] }} fs-6">{{ ticket.status_label[0] }}</span>
+            <span class="badge bg-{{ ticket.priority_label[1] }}">{{ ticket.priority_label[0] }}</span>
+          </div>
+          <h4 class="mb-0 fw-bold">{{ ticket.title }}</h4>
+        </div>
+        {% if current_user.is_agent_or_admin() or ticket.reporter_id == current_user.id %}
+        <a href="{{ url_for('ticket_edit', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline-secondary ms-2">
+          <i class="bi bi-pencil me-1"></i>Bearbeiten
+        </a>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if ticket.description %}
+        <div class="wiki-content mb-3">{{ ticket.description|markdown|safe }}</div>
+        {% else %}
+        <p class="text-muted fst-italic">Keine Beschreibung vorhanden.</p>
+        {% endif %}
+
+        {% if ticket.tag_list %}
+        <div class="mt-3">
+          {% for tag in ticket.tag_list %}
+          <span class="badge bg-secondary bg-opacity-15 text-secondary me-1">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Attachments -->
+    {% if ticket.attachments.count() > 0 %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-paperclip me-2"></i>Anhänge</h6>
+      </div>
+      <div class="card-body p-2">
+        <div class="d-flex flex-wrap gap-2">
+          {% for att in ticket.attachments %}
+          <a href="{{ url_for('download_attachment', filename=att.filename) }}"
+             class="btn btn-sm btn-outline-secondary" download="{{ att.original_name }}">
+            <i class="bi bi-file-earmark me-1"></i>{{ att.original_name|truncate(30) }}
+            <span class="text-muted ms-1" style="font-size:.7rem">
+              ({{ (att.file_size / 1024)|round(1) }} KB)
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Comments -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-chat-left-text me-2"></i>
+          Kommentare ({{ comments|length }})
+        </h6>
+      </div>
+      <div class="card-body">
+        {% for comment in comments %}
+        {% if not comment.is_internal or current_user.is_agent_or_admin() %}
+        <div class="comment-item {% if comment.is_internal %}internal{% endif %} mb-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="user-avatar">{{ comment.author.initials }}</div>
+            <div>
+              <span class="fw-semibold small">{{ comment.author.display_name }}</span>
+              <span class="text-muted ms-2" style="font-size:.75rem">{{ comment.created_at|timeago }}</span>
+              {% if comment.is_internal %}
+              <span class="badge bg-warning text-dark ms-1 small">Intern</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="wiki-content">{{ comment.content|markdown|safe }}</div>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-muted text-center py-3">Noch keine Kommentare.</p>
+        {% endfor %}
+
+        <!-- Add comment form -->
+        <hr class="my-4">
+        <h6 class="fw-semibold mb-3">Kommentar hinzufügen</h6>
+        <form method="post" action="{{ url_for('ticket_comment', ticket_id=ticket.id) }}">
+          <div class="mb-3">
+            <textarea name="content" class="form-control" rows="4" data-markdown required
+                      placeholder="Kommentar verfassen… (Markdown wird unterstützt)"></textarea>
+          </div>
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              {% if current_user.is_agent_or_admin() %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_internal" id="internal">
+                <label class="form-check-label small" for="internal">Interne Notiz</label>
+              </div>
+              <select name="new_status" class="form-select form-select-sm" style="width:auto">
+                <option value="">Status beibehalten</option>
+                {% for val, (label, _) in [('open',('Offen','')),('in_progress',('In Bearbeitung','')),
+                   ('pending',('Wartend','')),('resolved',('Gelöst','')),('closed',('Geschlossen',''))] %}
+                <option value="{{ val }}" {% if ticket.status==val %}selected{% endif %}>→ {{ label }}</option>
+                {% endfor %}
+              </select>
+              {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-send me-1"></i>Senden
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar info -->
+  <div class="col-lg-4">
+    <!-- Details -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3 d-flex justify-content-between">
+        <h6 class="mb-0 fw-semibold">Details</h6>
+        {% if current_user.is_agent_or_admin() %}
+        <a href="{{ url_for('ticket_edit', ticket_id=ticket.id) }}" class="btn btn-xs btn-link p-0 small">
+          Bearbeiten
+        </a>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        <dl class="row g-0 mb-0 small">
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Status</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            <span class="badge bg-{{ ticket.status_label[1] }}">{{ ticket.status_label[0] }}</span>
+          </dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Priorität</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            <span class="badge bg-{{ ticket.priority_label[1] }}">{{ ticket.priority_label[0] }}</span>
+          </dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Melder</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            {% if ticket.reporter %}{{ ticket.reporter.display_name }}{% else %}—{% endif %}
+          </dd>
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Bearbeiter</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">
+            {% if ticket.assignee %}
+            <div class="d-flex align-items-center gap-1">
+              <div class="user-avatar" style="width:22px;height:22px;font-size:.55rem">{{ ticket.assignee.initials }}</div>
+              {{ ticket.assignee.display_name }}
+            </div>
+            {% else %}<span class="text-muted">Nicht zugewiesen</span>{% endif %}
+          </dd>
+          {% if ticket.team %}
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Team</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ ticket.team.name }}</dd>
+          {% endif %}
+          {% if ticket.category %}
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Kategorie</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ ticket.category }}</dd>
+          {% endif %}
+          {% if ticket.due_date %}
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Fällig</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ ticket.due_date.strftime('%d.%m.%Y') }}</dd>
+          {% endif %}
+          <dt class="col-5 px-3 py-2 text-muted border-bottom">Erstellt</dt>
+          <dd class="col-7 px-3 py-2 border-bottom mb-0">{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+          <dt class="col-5 px-3 py-2 text-muted">Aktualisiert</dt>
+          <dd class="col-7 px-3 py-2 mb-0">{{ ticket.updated_at|timeago }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Asset -->
+    {% if ticket.asset %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-pc-display me-2"></i>Betroffenes Asset</h6>
+      </div>
+      <div class="card-body">
+        <a href="{{ url_for('asset_detail', asset_id=ticket.asset.id) }}"
+           class="text-decoration-none fw-semibold">{{ ticket.asset.name }}</a>
+        <div class="text-muted small mt-1">
+          {{ ticket.asset.manufacturer }} {{ ticket.asset.model }}<br>
+          <span class="badge bg-{{ ticket.asset.type_label[1] }} mt-1">{{ ticket.asset.type_label[0] }}</span>
+          <span class="badge bg-{{ ticket.asset.status_label[1] }} mt-1">{{ ticket.asset.status_label[0] }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick actions for admins -->
+    {% if current_user.is_admin() %}
+    <div class="card border-0 shadow-sm border-danger border-opacity-25">
+      <div class="card-header bg-white py-2">
+        <h6 class="mb-0 fw-semibold text-danger small">Gefahrenzone</h6>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('ticket_delete', ticket_id=ticket.id) }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                  data-confirm="Ticket #{{ ticket.id }} wirklich löschen?">
+            <i class="bi bi-trash me-1"></i>Ticket löschen
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
